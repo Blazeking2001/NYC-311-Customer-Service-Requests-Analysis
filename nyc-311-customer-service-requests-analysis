@@ -37,36 +37,36 @@ data.isna().sum().where(lambda x:x>0).dropna()
 
 
 #dropping rows where closed and resolution date both are empty
-df = df[~(df['Closed Date'].isna() & df['Resolution Action Updated Date'].isna())]
+data = data[~(data['Closed Date'].isna() & data['Resolution Action Updated Date'].isna())]
 
 #updating closed date with resolution date where closed date is empty and vice versa
-df.loc[df['Closed Date'].isna(),'Closed Date'] = df[df['Closed Date'].isna()]['Resolution Action Updated Date']
-df.loc[df['Resolution Action Updated Date'].isna(),'Resolution Action Updated Date'] = df[df['Resolution Action Updated Date'].isna()]['Closed Date']
-df.loc[df['Due Date'].isna(),'Due Date'] = df[df['Due Date'].isna()]['Closed Date']
+data.loc[data['Closed Date'].isna(),'Closed Date'] = data[data['Closed Date'].isna()]['Resolution Action Updated Date']
+data.loc[data['Resolution Action Updated Date'].isna(),'Resolution Action Updated Date'] = data[data['Resolution Action Updated Date'].isna()]['Closed Date']
+data.loc[data['Due Date'].isna(),'Due Date'] = data[data['Due Date'].isna()]['Closed Date']
 
 #since now all rows have a completion date(closed/resolution) status of all complaints updated to close
-df.loc[df.Status.isin(['open','assigned','draft']),'Status'] = 'closed'
+data.loc[data.Status.isin(['open','assigned','draft']),'Status'] = 'closed'
 
 
 #filling na values based on highest occuring value(mode)
 #get mode values
-city = df.City.mode()[0]
-zipcode = df.loc[df.City == city,'Incident Zip'].mode()[0]
-latitude = df.loc[df['Incident Zip'] == zipcode,'Latitude'].mode()[0]
-longitude = df.loc[df['Incident Zip'] == zipcode,'Longitude'].mode()[0]
+city = data.City.mode()[0]
+zipcode = data.loc[data.City == city,'Incident Zip'].mode()[0]
+latitude = data.loc[data['Incident Zip'] == zipcode,'Latitude'].mode()[0]
+longitude = data.loc[data['Incident Zip'] == zipcode,'Longitude'].mode()[0]
 #fill zipcode,latitude and longitude with modevalues where city is empty and then update city value to mode value
-df.loc[df.City.isna(),'Incident Zip'] = zipcode
-df.loc[df.City.isna(),'City'] = city
-df.loc[(df.City == city) & (df.Latitude.isna()==True),'Latitude'] = latitude
-df.loc[(df.City == city) & (df.Longitude.isna()==True),'Longitude'] = longitude
+data.loc[data.City.isna(),'Incident Zip'] = zipcode
+data.loc[data.City.isna(),'City'] = city
+data.loc[(data.City == city) & (data.Latitude.isna()==True),'Latitude'] = latitude
+data.loc[(data.City == city) & (data.Longitude.isna()==True),'Longitude'] = longitude
 
-df.isna().sum().where(lambda x:x>0).dropna()
+data.isna().sum().where(lambda x:x>0).dropna()
 
-df.dropna(inplace=True)
-df.info()
+data.dropna(inplace=True)
+data.info()
 
 #create new column request closing time
-df.loc[:,'Request Closing Time(in hours)'] = (df['Closed Date'] - df['Created Date']).dt.total_seconds()
+data.loc[:,'Request Closing Time(in hours)'] = (data['Closed Date'] - data['Created Date']).dt.total_seconds()
 
 
 
@@ -75,22 +75,22 @@ df.loc[:,'Request Closing Time(in hours)'] = (df['Closed Date'] - df['Created Da
 #total complaints based on category
 plt.figure(figsize=(10,8))
 plt.title('Complaints Types Distribution')
-sns.countplot(y='Complaint Type', data=df)
+sns.countplot(y='Complaint Type', data=data)
 plt.show()
 
 #citywise complaint counts(total)
 plt.figure(figsize=(15,12))
 plt.title('Citywise total complaints')
-sns.countplot(y='City',data=df)
+sns.countplot(y='City',data=data)
 plt.show()
 
-top5cities = df['City'].value_counts().head(5).index.to_list()
-dstop5 = df[df.City.isin(top5cities)]
+top5cities = data['City'].value_counts().head(5).index.to_list()
+dstop5 = data[data.City.isin(top5cities)]
 #citywise complaint counts(typewise)
-df1 = pd.crosstab(dstop5['City'],dstop5['Complaint Type'])
+data1 = pd.crosstab(dstop5['City'],dstop5['Complaint Type'])
 
 ##citywise complaint counts(typewise)
-df1.plot(kind='barh',stacked=True,figsize=(12,10))
+data1.plot(kind='barh',stacked=True,figsize=(12,10))
 plt.title('Categorywise Complaints per city')
 plt.show()
 
@@ -104,12 +104,12 @@ plt.show()
 > Complaint Type(CAT), Location(CAT) : Chi-Square Test
 
 #new_ds = ds.dr
-complaintTypes = df['Complaint Type'].unique()
+complaintTypes = data['Complaint Type'].unique()
 for i in range(len(complaintTypes)):
-    exec("c{} = df.loc[(df['Complaint Type'] == '{}'),'Request Closing Time(in hours)']".format(i+1,complaintTypes[i]))
+    exec("c{} = data.loc[(data['Complaint Type'] == '{}'),'Request Closing Time(in hours)']".format(i+1,complaintTypes[i]))
     
 #Chi square test: Complaint Type(CAT), Location(CAT) 
-ctabDF = pd.crosstab(df['Complaint Type'],df['City'])
+ctabDF = pd.crosstab(data['Complaint Type'],data['City'])
 
 stat, p, dof, expected = chi2_contingency(ctabDF)
 print('Chi-Square Statistic Value: ',stat)
